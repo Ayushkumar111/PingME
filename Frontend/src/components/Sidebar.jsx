@@ -1,38 +1,36 @@
 import React from 'react'
-import { useEffect  , useState} from 'react';
+import { useEffect, useState } from 'react';
 import { useChatStore } from '../store/useChatStore';
 import { useAuthStore } from '../store/useAuthStore';
 import SidebarSkeleton from './Skeletons/SidebarSkeleton';
 import { Users } from "lucide-react";
 
-
-
 const Sidebar = () => {
- const { getUsers, users, isUserLoading, setSelectedUser ,  selectedUser} = useChatStore();
+ const { getUsers, users = [], isUserLoading, setSelectedUser, selectedUser } = useChatStore();
  
- const {onlineUsers}=useAuthStore();
- const [ showOnlineUsers , setShowOnlineUsers] = useState(false);
+ const { onlineUsers = [] } = useAuthStore();
+ const [ showOnlineUsers, setShowOnlineUsers] = useState(false);
 
-  useEffect(()=>{
+  useEffect(() => {
     getUsers();
+  }, [getUsers])
 
-  } , [getUsers])
-
-  const fileteredUsers = showOnlineUsers ? users.filter(user => onlineUsers.includes(user._id)) : users;
+  // Ensure users is an array before filtering
+  const fileteredUsers = showOnlineUsers 
+    ? (Array.isArray(users) ? users.filter(user => onlineUsers.includes(user._id)) : []) 
+    : (Array.isArray(users) ? users : []);
 
   if(isUserLoading) return <SidebarSkeleton/>
-
 
   return (
     <aside className="h-full w-20 lg:w-72 border-r border-base-300 flex flex-col transition-all duration-200">
       <div className="border-b border-base-300 w-full p-5">
         <div className="flex items-center gap-2">
-          <users className="size-6" />
+          <Users className="size-6" />
           <span className="font-medium hidden lg:block">Contacts</span>
         </div>
-        {/* TODO: Online filter toggle */}
         
-       <div className="mt-3 hidden lg:flex items-center gap-2">
+        <div className="mt-3 hidden lg:flex items-center gap-2">
           <label className="cursor-pointer flex items-center gap-2">
             <input
               type="checkbox"
@@ -47,15 +45,15 @@ const Sidebar = () => {
       </div>
 
       <div className="overflow-y-auto w-full py-3">
-        {fileteredUsers.map((user)=>
+        {fileteredUsers.map((user) => (
           <button
             key={user._id}
-            onClick={() => setSelectedUser(user)} // when clicked the user , it will be feed into the setselected user state and the state would be updated with that user id chat and in chat container we will see that user chat 
+            onClick={() => setSelectedUser(user)}
             className={`
               w-full p-3 flex items-center gap-3
               hover:bg-base-300 transition-colors
               ${selectedUser?._id === user._id ? "bg-base-300 ring-1 ring-base-300" : ""} 
-            `}// if we have the selected user its background colour will change in a bit darker shade in sidebar
+            `}
           >
             <div className="relative mx-auto lg:mx-0">
               <img
@@ -71,7 +69,6 @@ const Sidebar = () => {
               )}
             </div>
 
-            {/* User info - only visible on larger screens */}
             <div className="hidden lg:block text-left min-w-0">
               <div className="font-medium truncate">{user.fullName}</div>
               <div className="text-sm text-zinc-400">
@@ -79,20 +76,14 @@ const Sidebar = () => {
               </div>
             </div>
           </button>
-          )}
+        ))}
 
-          {fileteredUsers.length === 0 && (
-            <div className='text-center text-zinc-500 py-4'>No online user found</div>
-            )}
-        
-
-        
+        {fileteredUsers.length === 0 && (
+          <div className='text-center text-zinc-500 py-4'>No online user found</div>
+        )}
       </div>
     </aside>
   );
 }
 
-export default Sidebar; 
-
-//user.map is creating button for each user , each user has name , avatar , online status , and then when we click on 
-// that user  selecteduser state would be updated . and chat container will be shown 
+export default Sidebar;

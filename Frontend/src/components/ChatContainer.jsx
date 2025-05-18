@@ -7,6 +7,8 @@ import MessageSkeleton from './Skeletons/MessageSkeleton'
 import { useAuthStore } from '../store/useAuthStore'
 import { formatMessageTime } from '../lib/utlis'
 import { useRef } from 'react'
+import ImageLightbox from './ImageLightbox'
+import { useState } from 'react'
 
 
 
@@ -15,6 +17,26 @@ const ChatContainer = () => {
   const { messages , getMessages , isMessageLoading , selectedUser  , subscribeToMessages , unsubscribeFromMessages } = useChatStore()
   const{authUser} = useAuthStore()
   const messageEndRef = useRef(null);
+
+  const [ lightBox , setLightBox ] = useState({
+    isOpen : false , 
+    image : null 
+  });
+
+const openLightbox = ( image ) => {
+  setLightBox({
+    isOpen : true ,
+    image : image
+  });
+};
+  
+const closeLightbox = () => {
+  setLightBox({
+    isOpen : false ,
+    image : null
+  });
+  };
+
 
   useEffect(()=>{
     getMessages(selectedUser._id)
@@ -72,12 +94,13 @@ const ChatContainer = () => {
             {formatMessageTime(message.createdAt)}
           </time>
         </div>
-        <div className={`p-2 rounded-lg ${message.senderId === authUser._id ? 'bg-blue-600 text-white' : 'bg-gray-300 text-black'}`}>
+        <div className={`p-2 rounded-lg ${message.senderId === authUser._id ? 'bg-indigo-400 text-white' : 'bg-gray-300 text-black'}`}>
           {message.image && (
             <img 
               src={message.image}
               alt="attachment"
               className='sm:max-w-[200px] rounded-md mb-2'
+              onClick={()=> openLightbox(message.image)}
             />
           )}
           {message.text && <p>{message.text}</p>}
@@ -95,10 +118,19 @@ const ChatContainer = () => {
 
 
       <MessageInput/> 
+
+       {/* Lightbox Component */}
+      {lightBox.isOpen && (
+        <ImageLightbox 
+          image={lightBox.image}
+          alt="Message attachment"
+          onClose={closeLightbox}
+        />
+      )}
     
     
     
-    
+  
     
     
     </div>
