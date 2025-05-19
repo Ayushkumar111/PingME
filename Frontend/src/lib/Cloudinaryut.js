@@ -3,8 +3,8 @@ import axios from 'axios';
 
 export const uploadToCloudinary = async(file) => {
     try {
-        const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-        const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET; // Store in .env
+        const cloudName =  'dlghcqg7r'
+        const uploadPreset = 'chat_app_preset'
         
         const formData = new FormData();
         formData.append('file', file);
