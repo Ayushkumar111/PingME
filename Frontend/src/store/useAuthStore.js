@@ -5,6 +5,8 @@ import { toast } from "react-hot-toast";
 
 import { io } from "socket.io-client";
 
+import { uploadToCloudinary } from "../lib/Cloudinaryut";
+
 const BASE_URL =  import.meta.env.MODE === "development" ? 'http://localhost:5000/' : "/";
 
 export const useAuthStore = create((set ,get)=> ({
@@ -75,18 +77,32 @@ export const useAuthStore = create((set ,get)=> ({
 
     updateProfile : async(data)=> {
         try{
-            set({ isUpdatingProfile : true});
-            const res = await axiosInstance.put("/auth/update-profile" , data);
-            set({ authUser : res.data});
+
+            set({ isUpadtingProfile: true});
+
+            let profilePicUrl = data.profilePic; ; 
+
+            if(data.profilePic && typeof data.profilePic !== 'string'){
+                profilePicUrl = await uploadToCloudinary(data.profilePic);
+            }
+
+            // send only the url to backend 
+
+            const res = await axiosInstance.put("/auth/update-profile",{
+                profilePic : profilePicUrl
+            });
+            // update the authUser state with the new data
+            set({ authUser: res.data});
             toast.success("Profile updated successfully");
 
-        }catch(error){
-            console.log("Error in updateProfile:", error);
-            toast.error(error.response.data.message);
-
-        }finally{
-            set({isUpdatingProfile : false});
+       }catch(error){
+            console.log("Error in updating profile:", error);
+            toast.error(error.response?.data?.message || "Failed to update profile");
+        }  finally{
+            set({ isUpadtingProfile: false});
         }
+
+        
     },
 
 

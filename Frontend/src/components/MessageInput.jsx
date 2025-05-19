@@ -7,10 +7,10 @@ const MessageInput = () => {
   const [text, setText] = useState("");
   const [imagePreview, setImagePreview] = useState(null);
   const fileInputRef = useRef(null);
-  const { sendMessage } = useChatStore();
+  const { sendMessage  , selectedUser} = useChatStore();
 
   const handleImageChange = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files[0]; 
     if (!file.type.startsWith("image/")) {
       toast.error("Please select an image file");
       return;
@@ -32,11 +32,14 @@ const MessageInput = () => {
     e.preventDefault();
     if (!text.trim() && !imagePreview) return;
 
+    
     try {
-      await sendMessage({
-        text: text.trim(),
-        image: imagePreview,
-      });
+      // Pass parameters separately, not as an object
+      await sendMessage(
+        text.trim(),  // text
+        imagePreview, // selectedImage
+        selectedUser._id // receiverId - this was missing
+      );
 
       // Clear form
       setText("");

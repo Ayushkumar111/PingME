@@ -1,6 +1,6 @@
 import User from '../models/user.model.js';
 import Message from '../models/message.model.js';
-import cloudinary from '../lib/cloudinary.js';
+
 import { getRecieverSocketId , io } from '../lib/Socket.js';
 
 export const getUsersForSidebar = async (req, res) => {
@@ -39,21 +39,28 @@ export const getMessages = async (req, res) => {
 export const sendMessage = async ( req, res) =>{
     try{
 
+        console.log("Request body:", req.body);
+        console.log("Receiver ID from params:", req.params.id);
+
         const { text , image } = req.body;
         const { id: recieverId } = req.params;
         const senderId = req.user._id;
 
-        let imageUrl ;
-        if(image){
-            const uploadResponse = await cloudinary.uploader.upload(image);
-            imageUrl = uploadResponse.secure_url;
+        if (!recieverId) {
+            return res.status(400).json({ message: "Receiver ID is required" });
         }
 
+
+
+
+
+
+        // no need to upload to cloudinary , we are getting url from client 
         const newMessage = new Message({
             senderId,
             recieverId,
-            text,
-            image: imageUrl,
+            text: typeof text === "string" ? text : null, // check if text is string
+            image: typeof image == 'string'? image:null , // direct url of image from cloudinary 
         });
 
         await newMessage.save();
@@ -80,4 +87,4 @@ export const sendMessage = async ( req, res) =>{
 
 
    
-}
+};

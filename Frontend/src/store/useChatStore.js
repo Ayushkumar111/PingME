@@ -2,6 +2,7 @@ import { create } from "zustand";
 import toast from 'react-hot-toast';
 import { axiosInstance } from "../lib/axios";
 import { useAuthStore } from "./useAuthStore";
+import { uploadToCloudinary } from "../lib/Cloudinaryut";
 
 export const useChatStore = create((set, get) => ({
     messages: [],
@@ -9,6 +10,7 @@ export const useChatStore = create((set, get) => ({
     selectedUser: null,
     isUserLoading: false,
     isMessageLoading: false,
+    isSendingMessage: false,
 
     getUsers: async () => {
         set({ isUserLoading: true });
@@ -34,13 +36,30 @@ export const useChatStore = create((set, get) => ({
         }
     },
 
-    sendMessage: async (messageData) => {
-        const { selectedUser, messages } = get();
+    sendMessage: async (text , selectedImage , receiverId) => {
+        const {  messages } = get();
         try {
-            const res = await axiosInstance.post(`/message/send/${selectedUser._id}`, messageData);
+            set({ isSendingMessage: true });
+
+            let imageUrl = null;
+            
+
+            if(selectedImage) {
+                imageUrl = await uploadToCloudinary(selectedImage);
+            }
+
+
+
+            const res = await axiosInstance.post(`/message/send/${receiverId}`, {
+                text,
+                image: imageUrl,
+            });
             set({ messages: [...messages, res.data] });
+
         } catch (error) {
             toast.error(error.response?.data?.message || "Failed to send message");
+        }finally{
+            set({ isSendingMessage: false });
         }
     },
 

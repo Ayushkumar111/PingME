@@ -105,20 +105,12 @@ export const updateProfile = async( req, res)=>{
         const { profilePic}= req.body; // destructuring the profilePic from req.body
         const userId = req.user._id;
 
-        if(!profilePic) return res.status(400).json({message:"Profile pic is required"}); // no dp their , pf needed for updatation 
-
-        const uploadResponse = await cloudinary.uploader.upload(profilePic,
-            {
-            
-            allowed_formats: ["jpg", "png", "jpeg", "gif"],
-            folder: "profile_pics",
-            }
-
-        ); //uploading the image to cloudinary
-
+        if(!profilePic) return res.status(400).json({message:"Profile pic is required"}); // no dp their , pf needed for updatation
+        
+          
         const updatedUser = await User.findByIdAndUpdate(
             userId, 
-            {profilePic:uploadResponse.secure_url}, 
+            {profilePic}, 
             {new:true} // to get the updated user
         ).select("-password"); // to not send the password in response
 
@@ -127,11 +119,7 @@ export const updateProfile = async( req, res)=>{
     }catch(error){
         console.log("Error in updateProfile controller", error.message);
 
-        if (error.message.includes("invalid image")) {
-            return res.status(400).json({message: "Invalid image format"});
-        }
-
-        res.status(500).json({
+            res.status(500).json({
             message: "Failed to update profile picture",
             error : process.env.NODE_ENV === "development" ? error.message :'Internal server error',
         });
