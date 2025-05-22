@@ -16,15 +16,24 @@ cloudinary.config({
 
 
 export const signup = async (req , res)=>{
-    const {fullName , email , password} = req.body;
+    const {fullName , email , password , username} = req.body;
    try{
-         if(!fullName || !email || !password){
+         if(!fullName || !username ||!email || !password){
             return res.status(400).json({ message: "All fields are required"});
         }
 
        if(password.length<6){
         return res.status(400).json({ message: "Password must be atleast 6 characters long"});
        }
+
+       // checking vailidty of user name 
+
+       const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
+        if (!usernameRegex.test(username)) {
+            return res.status(400).json({ 
+                message: "Username must be 3-20 characters and can only contain letters, numbers, and underscores" 
+            });
+        }
 
        const user = await User.findOne({email});
        if(user) return res.status(400).json({ message: "User already exists"});
@@ -34,9 +43,11 @@ export const signup = async (req , res)=>{
 
        const newUser = new User({
         fullName,
+        username,
         email,
         password: hashPassword
        })
+
     if(newUser){
         generateToken(newUser._id, res);
         await newUser.save();
@@ -44,6 +55,7 @@ export const signup = async (req , res)=>{
         res.status(201).json({
             _id:newUser._id,
             fullName:newUser.fullName,
+            username: newUser.username,
             email:newUser.email,
             profilePic:newUser.profilePic,
         })
@@ -72,6 +84,7 @@ export const login = async(req , res)=>{
         res.status(200).json({
             _id:user._id,
             fullName:user.fullName,
+            username: user.username,
             email:user.email,
             profilePic:user.profilePic,
         });

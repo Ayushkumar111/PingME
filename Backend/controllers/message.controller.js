@@ -1,7 +1,7 @@
 import User from '../models/user.model.js';
 import Message from '../models/message.model.js';
 
-import { getRecieverSocketId , io } from '../lib/Socket.js';
+import { getReceiverSocketId, io } from '../lib/Socket.js';
 
 export const getUsersForSidebar = async (req, res) => {
     try{
@@ -23,9 +23,9 @@ export const getMessages = async (req, res) => {
 
         const messages = await Message.find({
             $or:[
-                {senderId: myId, recieverId: userToChatId},// fetch me all the msg b/w me and other person where either i am the sender & he is reciver or vice versa 
-                {senderId: userToChatId, recieverId: myId}
-            ]
+                {senderId: myId, receiverId : userToChatId } , //person where either i am the sender & he is reciver or vice versa 
+                {senderId: userToChatId, receiverId : myId}
+            ] 
         })
 
         res.status(200).json(messages);
@@ -43,10 +43,10 @@ export const sendMessage = async ( req, res) =>{
         console.log("Receiver ID from params:", req.params.id);
 
         const { text , image } = req.body;
-        const { id: recieverId } = req.params;
+        const { id: receiverId} = req.params;
         const senderId = req.user._id;
 
-        if (!recieverId) {
+        if (!receiverId) {
             return res.status(400).json({ message: "Receiver ID is required" });
         }
 
@@ -58,7 +58,7 @@ export const sendMessage = async ( req, res) =>{
         // no need to upload to cloudinary , we are getting url from client 
         const newMessage = new Message({
             senderId,
-            recieverId,
+            receiverId,
             text: typeof text === "string" ? text : null, // check if text is string
             image: typeof image == 'string'? image:null , // direct url of image from cloudinary 
         });
@@ -67,9 +67,9 @@ export const sendMessage = async ( req, res) =>{
 
         //to do real time update feautre using socket.io
 
-         const recieverSocketId = getRecieverSocketId(recieverId);
-         if(recieverSocketId){
-            io.to(recieverSocketId).emit("newMessage" , newMessage);
+         const receiverSocketId = getReceiverSocketId(receiverId); // get the socket id of the receiver
+         if(receiverSocketId){
+            io.to(receiverSocketId.emit("newMessage" , newMessage));
          }
 
 

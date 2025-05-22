@@ -17,10 +17,10 @@ export const useAuthStore = create((set ,get)=> ({
     isUpadtingProfile : false , 
     onlineUsers : [],
     socketState: null,
-
-
-
-
+    receivedInvites: [],
+    sentInvites: [],
+    isLoadingInvites: false,
+    isSendingInvite: false,
 
 
     isCheckingAuth : true, // loading state
@@ -121,6 +121,126 @@ export const useAuthStore = create((set ,get)=> ({
             set({ isLoggingUp : false});
         }
     },
+
+
+
+
+     getReceivedInvites: async () => {
+        try {
+            set({ isLoadingInvites: true });
+            const res = await axiosInstance.get("/invite/received");
+            set({ receivedInvites: res.data });
+        } catch (error) {
+            console.error("Error fetching received invites:", error);
+            toast.error("Failed to load invites");
+        } finally {
+            set({ isLoadingInvites: false });
+        }
+    },
+    
+    // Get sent invites
+    getSentInvites: async () => {
+        try {
+            set({ isLoadingInvites: true });
+            const res = await axiosInstance.get("/invite/sent");
+            set({ sentInvites: res.data });
+        } catch (error) {
+            console.error("Error fetching sent invites:", error);
+            toast.error("Failed to load sent invites");
+        } finally {
+            set({ isLoadingInvites: false });
+        }
+    },
+    
+    // Send invite
+    sendInvite: async (username) => {
+        try {
+            set({ isSendingInvite: true });
+            const res = await axiosInstance.post("/invite/send", { username });
+            
+            // Add new invite to sent invites
+            set(state => ({ 
+                sentInvites: [res.data, ...state.sentInvites] 
+            }));
+            
+            toast.success("Invite sent successfully");
+            return true;
+        } catch (error) {
+            console.error("Error sending invite:", error);
+            toast.error(error.response?.data?.message || "Failed to send invite");
+            return false;
+        } finally {
+            set({ isSendingInvite: false });
+        }
+    },
+    
+    // Accept the invite invite
+    acceptInvite: async (inviteId) => {
+        try {
+            const res = await axiosInstance.put(`/invite/${inviteId}/accept`);
+            
+            // Update received invites list
+            set(state => ({
+                receivedInvites: state.receivedInvites.map(invite => 
+                    invite._id === inviteId ? { ...invite, status: 'accepted' } : invite
+                )
+            }));
+            
+            toast.success("Invite accepted");
+            return true;
+        } catch (error) {
+            console.error("Error accepting invite:", error);
+            toast.error("Failed to accept invite");
+            return false;
+        }
+    },
+    
+    // Reject  the invite
+    rejectInvite: async (inviteId) => {
+        try {
+            await axiosInstance.put(`/invite/${inviteId}/reject`);
+            
+            // Update received invites list
+            set(state => ({
+                receivedInvites: state.receivedInvites.map(invite => 
+                    invite._id === inviteId ? { ...invite, status: 'rejected' } : invite
+                )
+            }));
+            
+            toast.success("Invite rejected");
+            return true;
+        } catch (error) {
+            console.error("Error rejecting invite:", error);
+            toast.error("Failed to reject invite");
+            return false;
+        }
+    },
+    
+    // Delete  the invite
+    deleteInvite: async (inviteId, type) => {
+        try {
+            await axiosInstance.delete(`/invite/${inviteId}`);
+            
+            // Update appropriate invites list
+            if (type === 'received') {
+                set(state => ({
+                    receivedInvites: state.receivedInvites.filter(invite => invite._id !== inviteId)
+                }));
+            } else {
+                set(state => ({
+                    sentInvites: state.sentInvites.filter(invite => invite._id !== inviteId)
+                }));
+            }
+            
+            toast.success("Invite deleted");
+            return true;
+        } catch (error) {
+            console.error("Error deleting invite:", error);
+            toast.error("Failed to delete invite");
+            return false;
+        }
+    },
+
 
    connectSocket:() =>{
     const { authUser} = get();
