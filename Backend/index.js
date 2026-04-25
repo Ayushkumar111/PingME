@@ -10,7 +10,7 @@ import { connectDB } from './lib/db.js';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import path from 'path';
-import { server , app } from './lib/Socket.js';
+import { server, app } from './lib/Socket.js';
 import client from 'prom-client';
 
 // Initialize Prometheus metrics collection
@@ -26,8 +26,8 @@ const __dirname = path.resolve();
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
-    origin : ['http://localhost:5173'],
-    credentials : true,
+    origin: ['http://localhost:5173'],
+    credentials: true,
 }));
 
 
@@ -35,8 +35,8 @@ app.use(express.json({ limit: '200mb' }));
 app.use(express.urlencoded({ limit: '200mb', extended: true }));
 app.use("/api/cloudinary", cloudinaryRoutes);
 app.use("/api/auth", authRoutes);
-app.use("/api/message",messageRoutes);
-app.use("/api/invite" , inviteRoutes);
+app.use("/api/message", messageRoutes);
+app.use("/api/invite", inviteRoutes);
 
 // Prometheus Metrics Endpoint
 app.get('/metrics', async (req, res) => {
@@ -45,7 +45,7 @@ app.get('/metrics', async (req, res) => {
     res.send(metrics);
 });
 
-if (process.env.NODE_ENV === "production"){
+if (process.env.NODE_ENV === "production") {
     app.use(express.static(path.join(__dirname, "../Frontend/dist")));
 
     app.get("*", (req, res) => {
@@ -53,7 +53,7 @@ if (process.env.NODE_ENV === "production"){
     })
 }
 
-server.listen(PORT,()=>{
-    console.log("server is running on PORT:" + PORT);
+server.listen(PORT, () => {
+    console.log("serverr is running on PORT:" + PORT);
     connectDB();
 });
