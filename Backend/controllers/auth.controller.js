@@ -2,151 +2,157 @@ import mongoose from "mongoose";
 import User from "../models/user.model.js";
 import { generateToken } from "../lib/utils.js";
 import bcrypt from "bcryptjs";
-import {v2 as cloudinary} from "cloudinary";
+import { v2 as cloudinary } from "cloudinary";
 
 
 // REMOVE THE API KEY AND SECRET BEFORE COMMITTING
 
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
 
 
-export const signup = async (req , res)=>{
-    const {fullName , email , password , username} = req.body;
-   try{
-         if(!fullName || !username ||!email || !password){
-            return res.status(400).json({ message: "All fields are required"});
+export const signup = async (req, res) => {
+    const { fullName, email, password, username } = req.body;
+    try {
+        if (!fullName || !username || !email || !password) {
+            return res.status(400).json({ message: "All fields are required" });
         }
 
-       if(password.length<6){
-        return res.status(400).json({ message: "Password must be atleast 6 characters long"});
-       }
+        if (password.length < 6) {
+            return res.status(400).json({ message: "Password must be atleast 6 characters long" });
+        }
 
-       // checking vailidty of user name 
+        // checking vailidty of user name 
 
-       const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
+        const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
         if (!usernameRegex.test(username)) {
-            return res.status(400).json({ 
-                message: "Username must be 3-20 characters and can only contain letters, numbers, and underscores" 
+            return res.status(400).json({
+                message: "Username must be 3-20 characters and can only contain letters, numbers, and underscores"
             });
         }
 
-       const user = await User.findOne({email});
-       if(user) return res.status(400).json({ message: "User already exists"});
-       
-       const salt = await bcrypt.genSalt(10);
-       const hashPassword = await bcrypt.hash(password,salt);
+        const user = await User.findOne({ email });
+        if (user) return res.status(400).json({ message: "User already exists" });
 
-       const newUser = new User({
-        fullName,
-        username,
-        email,
-        password: hashPassword
-       })
+        const salt = await bcrypt.genSalt(10);
+        const hashPassword = await bcrypt.hash(password, salt);
 
-    if(newUser){
-        generateToken(newUser._id, res);
-        await newUser.save();
-        
-        res.status(201).json({
-            _id:newUser._id,
-            fullName:newUser.fullName,
-            username: newUser.username,
-            email:newUser.email,
-            profilePic:newUser.profilePic,
+        const newUser = new User({
+            fullName,
+            username,
+            email,
+            password: hashPassword
         })
 
-        
-    }else{
-        return res.status(400).json({ message: "User not created"});
-    }
-   }catch(error){
-    console.log("Signup error:", error.message);
-    res.status(500).json({message: "Server error"});
-    
-   }
+        if (newUser) {
+            generateToken(newUser._id, res);
+            await newUser.save();
 
-   
+            res.status(201).json({
+                _id: newUser._id,
+                fullName: newUser.fullName,
+                username: newUser.username,
+                email: newUser.email,
+                profilePic: newUser.profilePic,
+            })
+
+
+        } else {
+            return res.status(400).json({ message: "User not created" });
+        }
+    } catch (error) {
+        console.log("Signup error:", error.message);
+        res.status(500).json({ message: "Server error" });
+
+    }
+
+
 };
 
-export const login = async(req , res)=>{
-    const{email , password} = req.body;
-    try{
-        const user = await User.findOne({email});
-        if(!user) return res.status(400).json({message: "Invalid credentials"});
+export const login = async (req, res) => {
+    const { email, password } = req.body;
+    try {
+        const user = await User.findOne({ email });
+
+        if (!user) return res.status(400).json({ message: "Invalid credentials" });
+
+
         const isPasswordCorrect = await bcrypt.compare(password, user.password);
-        if(!isPasswordCorrect) return res.status(400).json({message:"invalid credentials"});
+
+        if (!isPasswordCorrect) return res.status(400).json({ message: "invalid credentials" });
+
+
         generateToken(user._id, res);
+
         res.status(200).json({
-            _id:user._id,
-            fullName:user.fullName,
+            _id: user._id,
+            fullName: user.fullName,
             username: user.username,
-            email:user.email,
-            profilePic:user.profilePic,
+            email: user.email,
+            profilePic: user.profilePic,
         });
 
-    }catch(error){
+    } catch (error) {
         console.log("Error in login controller", error.message);
-        res.status(500).json({messsage:"Internal server error"});
+        res.status(500).json({ messsage: "Internal server error" });
 
     };
 
-   
+
 
 };
 
-export const logout = (req , res)=>{
-    
-   try{
-    res.cookie("jwt", "" , {maxAge:0});
-    res.status(201).json({message:"Logged out"});
-   }catch(error){
-    console.log("Error in logout controller", error.message);
-    res.status(500).json({message:"Internal server error"});
-   }
+export const logout = (req, res) => {
+
+    try {
+        res.cookie("jwt", "", { maxAge: 0 });
+        res.status(201).json({ message: "Logged out" });
+    } catch (error) {
+        console.log("Error in logout controller", error.message);
+        res.status(500).json({ message: "Internal server error" });
+    }
 
 };
 
 
-export const updateProfile = async( req, res)=>{
+export const updateProfile = async (req, res) => {
 
-    try{
-        const { profilePic}= req.body; // destructuring the profilePic from req.body
+    try {
+        const { profilePic } = req.body; // destructuring the profilePic from req.body
         const userId = req.user._id;
 
-        if(!profilePic) return res.status(400).json({message:"Profile pic is required"}); // no dp their , pf needed for updatation
-        
-          
+        if (!profilePic) return res.status(400).json({ message: "Profile pic is required" }); // no dp their , pf needed for updatation
+
+
         const updatedUser = await User.findByIdAndUpdate(
-            userId, 
-            {profilePic}, 
-            {new:true} // to get the updated user
+            userId,
+            { profilePic },
+            { new: true } // to get the updated user
         ).select("-password"); // to not send the password in response
 
         res.status(200).json(updatedUser);
 
-    }catch(error){
+    } catch (error) {
         console.log("Error in updateProfile controller", error.message);
 
-            res.status(500).json({
+        res.status(500).json({
             message: "Failed to update profile picture",
-            error : process.env.NODE_ENV === "development" ? error.message :'Internal server error',
+            error: process.env.NODE_ENV === "development" ? error.message : 'Internal server error',
         });
-        
+
     }
 
 };
 
-export const CheckAuth = ( req , res)=>{
-    try{
+export const CheckAuth = (req, res) => {
+    try {
         res.status(200).json(req.user);
-    }catch(error){
+    } catch (error) {
         console.log("Error in checkauth controller", error.message);
-        res.status(500).json({message:"Invalid token"});
+        res.status(500).json({ message: "Invalid token" });
     }
 };
- 

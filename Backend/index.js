@@ -11,6 +11,11 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import path from 'path';
 import { server , app } from './lib/Socket.js';
+import client from 'prom-client';
+
+// Initialize Prometheus metrics collection
+const collectDefaultMetrics = client.collectDefaultMetrics;
+collectDefaultMetrics({ register: client.register });
 
 dotenv.config();
 
@@ -32,6 +37,13 @@ app.use("/api/cloudinary", cloudinaryRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/message",messageRoutes);
 app.use("/api/invite" , inviteRoutes);
+
+// Prometheus Metrics Endpoint
+app.get('/metrics', async (req, res) => {
+    res.setHeader('Content-Type', client.register.contentType);
+    const metrics = await client.register.metrics();
+    res.send(metrics);
+});
 
 if (process.env.NODE_ENV === "production"){
     app.use(express.static(path.join(__dirname, "../Frontend/dist")));

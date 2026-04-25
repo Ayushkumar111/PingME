@@ -1,0 +1,48 @@
+services:
+  backend:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    container_name: pingme-backend
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./Backend/.env
+    networks:
+      - pingme-network
+
+  frontend:
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile
+    container_name: pingme-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    networks:
+      - pingme-network
+
+  prometheus:
+    image: prom/prometheus
+    container_name: pingme-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - pingme-network
+
+  grafana:
+    image: grafana/grafana
+    container_name: pingme-grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - pingme-network
+
+networks:
+  pingme-network:
+    driver: bridge
