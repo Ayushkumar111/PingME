@@ -22,8 +22,8 @@ pipeline {
         stage('Build and Deploy Containers') {
             steps {
                 // Build new images and restart the containers
-                bat 'docker-compose down'
-                bat 'docker-compose up --build -d'
+                bat 'docker-compose -p pingme down'
+                bat 'docker-compose -p pingme up --build -d'
                 echo 'Application Deployed Locally Successfully!'
             }
         }
